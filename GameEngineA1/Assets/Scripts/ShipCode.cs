@@ -14,8 +14,8 @@ public class ShipCode : MonoBehaviour {
     public float speed = 1f;
     public float rotationSpeed = 90f; // deg/sec
     private bool hasCargo = false;
-    public Vector3 pointA = new Vector3(-10f,0f,0f);
-    public Vector3 pointB = new Vector3(10f,0f,0f);
+    public Vector3 leftStation = new Vector3(-10f,0f,0f);
+    public Vector3 rightStation = new Vector3(10f,0f,0f);
 
     
     // Use this for initialization
@@ -88,37 +88,45 @@ public class ShipCode : MonoBehaviour {
 
     void Update()
     {
-        Move();
+        Move(leftStation, rightStation);
         Transform();
         Draw();
     }
 
-    private void Move()
+   private void Move(Vector3 leftPos, Vector3 rightPos)
     {
-        float pointDir;
-        if (position[0] < pointA[0]) {hasCargo = true;}
-        if (position[0] > pointB[0]) {hasCargo = false;}
         if (hasCargo)
         {
-            pointDir = 270;
-            AddPosition(new Vector3(speed, 0f, 0f));
-        } else {
-            pointDir = 90;
-            AddPosition(new Vector3(-speed, 0f, 0f));
-        }
-        float rotationToTarget = rotation-pointDir;
-        if (rotationToTarget != 0)
-        {
-            if (rotationToTarget < rotationSpeed)
+            AddPosition(new Vector3(speed * Time.deltaTime, 0f, 0f));
+            if (position[0] >= rightPos[0])
             {
-                AddRotation(rotationToTarget);
+                hasCargo = false;
+            }
+
+            if (Mathf.Abs(270 - rotation)*Time.deltaTime < rotationSpeed * Time.deltaTime)
+            {
+                rotation = 270;
+            } else
+            {
+                AddRotation(rotationSpeed * Time.deltaTime);
+            }
+        } else
+        {
+            AddPosition(new Vector3(-speed * Time.deltaTime, 0f, 0f));
+            if (position[0] <= leftPos[0])
+            {
+                hasCargo = true;
+            }
+
+            if (Mathf.Abs(90 - rotation) * Time.deltaTime < rotationSpeed * Time.deltaTime)
+            {
+                rotation = 90;
             }
             else
             {
-                AddRotation(rotationSpeed);
+                AddRotation(rotationSpeed * Time.deltaTime);
             }
         }
-        
     }
 
     // Matrix that scales ship
@@ -233,13 +241,11 @@ public class ShipCode : MonoBehaviour {
         // Translate each point in the base mesh
         for(int i = 0; i < vertices.Length; i++)
         {
-            vertices[i] = S.MultiplyPoint(vertices[i]);
+            vertices[i] = P.MultiplyPoint(vertices[i]);
         }
 
         // Set the vertices in the mesh to their new position
         mesh.vertices = vertices;
-        // Recalculate the bounding volume
-        mesh.RecalculateBounds();
         // Recalculate the bounding volume
         mesh.RecalculateBounds();
     }
